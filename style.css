@@ -199,6 +199,14 @@ body {
     background: var(--earth);
 }
 
+html.company-profile .sidebar {
+    display: none;
+}
+
+html.company-profile .app-shell {
+    width: 100%;
+}
+
 .dashboard-header {
     display: flex;
     justify-content: space-between;

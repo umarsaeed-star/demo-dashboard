@@ -327,6 +327,19 @@ function companyPageUrl(name) {
     return `company.html?company=${encodeURIComponent(companySlug(name))}`;
 }
 
+function companyProfileLinkAttrs(name) {
+    return `href="${companyPageUrl(name)}" target="_blank" rel="noopener noreferrer"`;
+}
+
+function openCompanyProfile(name) {
+    if (!name) return;
+    window.open(companyPageUrl(name), "_blank", "noopener,noreferrer");
+}
+
+function isCompanyProfileView() {
+    return PAGE === "company" && Boolean(urlCompanyQuery());
+}
+
 function urlCompanyQuery() {
     return new URLSearchParams(window.location.search).get("company") || "";
 }
@@ -3013,7 +3026,7 @@ function renderCompanyIndex() {
         const people = answers.length;
         const csi = meanScore(answers, "IfactorOPEN_csi");
         return `
-            <a class="company-card" href="${companyPageUrl(name)}">
+            <a class="company-card" ${companyProfileLinkAttrs(name)}>
                 <div class="company-card-top">
                     <h3>${name}</h3>
                     <span class="company-csi" title="Average CSI">${csi == null ? "—" : csi.toFixed(1)}<small>CSI</small></span>
@@ -3026,7 +3039,7 @@ function renderCompanyIndex() {
 
 function fillCompanyNav() {
     const nav = document.getElementById("company-nav");
-    if (!nav) return;
+    if (!nav || isCompanyProfileView()) return;
 
     const ranked = rollupCounts(surveyRows.map((row) => ({ label: displayValue(row.CompanyOPEN) })), "label")
         .filter((item) => item.label !== MISSING)
@@ -3038,7 +3051,7 @@ function fillCompanyNav() {
         : ranked;
 
     nav.innerHTML = names.map((name) => {
-        return `<a href="${companyPageUrl(name)}"${name === COMPANY_NAME ? ' class="is-active"' : ""}>${name}</a>`;
+        return `<a ${companyProfileLinkAttrs(name)}${name === COMPANY_NAME ? ' class="is-active"' : ""}>${name}</a>`;
     }).join("");
 }
 
@@ -3104,7 +3117,7 @@ function renderDashboard() {
     });
     createComboTrendChart("sample-csi-trend", yearCsiTrend(data));
     createScaleBarChart("group-chart", companies.slice(0, 18), "Answers", null, (label) => {
-        window.location.href = companyPageUrl(label);
+        openCompanyProfile(label);
     });
     createStackedBarChart("group-year-chart", data.filter((row) => topSet.has(displayValue(row.CompanyOPEN))), {
         groupFn: (row) => displayValue(row.CompanyOPEN),
@@ -3148,6 +3161,11 @@ function resetToFirstPage() {
 
 function initCompanyContext() {
     if (PAGE !== "company") return;
+
+    if (urlCompanyQuery()) {
+        document.documentElement.classList.add("company-profile");
+        document.body.classList.add("company-profile");
+    }
 
     COMPANY_NAME = resolveCompanyName(urlCompanyQuery());
     COMPANY_HIERS = new Set(
