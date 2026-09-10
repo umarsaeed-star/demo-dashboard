@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=heatmap">
+    <link rel="stylesheet" href="style.css?v=yearchips">
 
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
@@ -48,12 +48,6 @@
                 <label>
                     Company
                     <select id="filter-company">
-                        <option value="">All</option>
-                    </select>
-                </label>
-                <label>
-                    Report year
-                    <select id="filter-year">
                         <option value="">All</option>
                     </select>
                 </label>
@@ -98,6 +92,10 @@
                     <input id="filter-search" type="search" placeholder="Company, project…">
                 </label>
                 <button type="button" id="reset-filters">Reset</button>
+                <label class="year-filter">
+                    Report year
+                    <div class="year-chips" id="filter-year"></div>
+                </label>
             </section>
 
             <section class="kpi-board">
@@ -214,6 +212,49 @@
                 </div>
             </section>
 
+            <section class="page-section">
+                <div class="section-head">
+                    <h2>Records</h2>
+                    <p>One row per answer from SurveyData 2018–2026.</p>
+                </div>
+                <div class="chart-card full-width table-card">
+                    <div class="table-header">
+                        <h2>SurveyData 2018–2026</h2>
+                        <p id="survey-table-count"></p>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Company</th>
+                                    <th>Project</th>
+                                    <th>CSI</th>
+                                    <th>CSI score</th>
+                                    <th>Recommend</th>
+                                    <th>Year</th>
+                                    <th>Device</th>
+                                    <th>Age</th>
+                                    <th>Gender</th>
+                                </tr>
+                            </thead>
+                            <tbody id="survey-answers-table"></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="survey-pagination">
+                        <label class="page-size">
+                            Rows
+                            <select id="survey-page-size">
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </label>
+                        <p id="survey-page-info"></p>
+                        <div class="page-buttons" id="survey-page-buttons"></div>
+                    </div>
+                </div>
+            </section>
+
         </main>
 
         <footer>
@@ -223,6 +264,6 @@
     </div>
 
     <script src="nkidata.js"></script>
-    <script src="app.js?v=heatmap"></script>
+    <script src="app.js?v=yearchips"></script>
 </body>
 </html>

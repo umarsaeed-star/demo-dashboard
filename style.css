@@ -301,11 +301,11 @@ body {
     padding: 12px 14px 12px;
 }
 
-.filters button {
+.filters > button {
     justify-self: start;
 }
 
-.filters label {
+.filters > label {
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -315,8 +315,8 @@ body {
 }
 
 .filters select,
-.filters input,
-.filters button {
+.filters input:not([type="checkbox"]),
+.filters > button {
     height: 36px;
     border: 1px solid var(--aluminium);
     border-radius: 6px;
@@ -326,15 +326,60 @@ body {
     color: var(--plum);
 }
 
-.filters button {
+.filters > button {
     cursor: pointer;
     background: var(--atomic);
     border-color: var(--atomic);
     font-weight: 600;
 }
 
-.filters button:hover {
+.filters > button:hover {
     filter: brightness(0.97);
+}
+
+.year-filter {
+    grid-column: 1 / -1;
+}
+
+.year-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.year-chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--aluminium);
+    border-radius: 6px;
+    background: var(--white);
+    color: var(--plum);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+}
+
+.year-chip input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+}
+
+.year-chip:hover {
+    border-color: var(--plum);
+}
+
+.year-chip.is-selected {
+    background: var(--plum);
+    border-color: var(--plum);
+    color: var(--earth);
 }
 
 .kpi-board {
@@ -542,6 +587,10 @@ svg {
 
 #region-csi-stacked {
     min-height: 280px;
+}
+
+#csi-year-grouped {
+    overflow-x: auto;
 }
 
 .treemap-wide #hierarchy-chart {

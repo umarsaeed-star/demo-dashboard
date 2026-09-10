@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=heatmap">
+    <link rel="stylesheet" href="style.css?v=yearchips">
 
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
@@ -69,17 +69,15 @@
                         <option value="">All</option>
                     </select>
                 </label>
-                <label>
-                    Report year
-                    <select id="filter-year">
-                        <option value="">All</option>
-                    </select>
-                </label>
                 <label class="search-label">
                     Search
                     <input id="filter-search" type="search" placeholder="Company, project, region…">
                 </label>
                 <button type="button" id="reset-filters">Reset</button>
+                <label class="year-filter">
+                    Report year
+                    <div class="year-chips" id="filter-year"></div>
+                </label>
             </section>
 
             <section class="kpi-board">
@@ -113,7 +111,7 @@
                 </div>
                 <div class="chart-card full-width">
                     <h2>CSI rating by year</h2>
-                    <p class="chart-hint">Answer count per year, split by CSI band.</p>
+                    <p class="chart-hint">Answer count by year and quarter, split by CSI band.</p>
                     <div id="csi-year-grouped"></div>
                 </div>
                 <div class="charts-grid">
@@ -245,6 +243,6 @@
     </div>
 
     <script src="nkidata.js"></script>
-    <script src="app.js?v=heatmap"></script>
+    <script src="app.js?v=yearchips"></script>
 </body>
 </html>

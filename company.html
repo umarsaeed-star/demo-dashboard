@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=heatmap">
+    <link rel="stylesheet" href="style.css?v=yearchips">
 
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
@@ -62,12 +62,6 @@
                         </select>
                     </label>
                     <label>
-                        Report year
-                        <select id="filter-year">
-                            <option value="">All</option>
-                        </select>
-                    </label>
-                    <label>
                         CSI rating
                         <select id="filter-csi">
                             <option value="">All</option>
@@ -102,6 +96,10 @@
                         <input id="filter-search" type="search" placeholder="Project, region…">
                     </label>
                     <button type="button" id="reset-filters">Reset</button>
+                    <label class="year-filter">
+                        Report year
+                        <div class="year-chips" id="filter-year"></div>
+                    </label>
                 </section>
 
                 <section class="kpi-board">
@@ -258,6 +256,6 @@
     </div>
 
     <script src="nkidata.js"></script>
-    <script src="app.js?v=heatmap"></script>
+    <script src="app.js?v=yearchips"></script>
 </body>
 </html>

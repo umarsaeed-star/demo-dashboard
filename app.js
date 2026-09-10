@@ -216,6 +216,11 @@ const YEAR_COLORS = {
 };
 
 const YEAR_ORDER = ["2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026", MISSING];
+const QUARTER_ORDER = YEAR_ORDER
+    .filter((year) => year !== MISSING)
+    .flatMap((year) => ["Q1", "Q2", "Q3", "Q4"].map((quarter) => `${year}-${quarter}`));
+
+assignYearQuarters(surveyRows);
 
 const FACTOR_EFFECT_LABELS = {
     home: "Home",
@@ -235,6 +240,23 @@ function scoreBandColor(score) {
 
 function csiCategory(row) {
     return CSI_LABELS[row.CSIcat3levelsG] || displayValue(row.CSIcat3levelsG);
+}
+
+function assignYearQuarters(data) {
+    const byYear = d3.group(
+        data.filter((row) => row.reportYear && row.reportYear !== MISSING),
+        (row) => row.reportYear
+    );
+    byYear.forEach((yearRows, year) => {
+        yearRows.sort((a, b) => a.respid - b.respid);
+        const total = yearRows.length || 1;
+        yearRows.forEach((row, index) => {
+            row.period = `${year}-Q${Math.min(4, Math.floor((index / total) * 4) + 1)}`;
+        });
+    });
+    data.forEach((row) => {
+        if (!row.period) row.period = row.reportYear;
+    });
 }
 
 function addYGrid(chart, y, width, ticks = 5) {
@@ -330,17 +352,97 @@ function filterValue(element) {
     return element && element.value ? element.value : "";
 }
 
+function isMultiSelect(element) {
+    return Boolean(element && element.classList && element.classList.contains("year-chips"));
+}
+
+function selectedFilterValues(element) {
+    if (!element) return [];
+    if (isMultiSelect(element)) {
+        return Array.from(element.querySelectorAll("input[type='checkbox']:checked")).map((input) => input.value);
+    }
+    return element.value ? [element.value] : [];
+}
+
+function selectedYearSet() {
+    const years = selectedFilterValues(filters.year).filter((year) => year && year !== MISSING);
+    return years.length ? new Set(years) : null;
+}
+
+function orderedYearValues(values) {
+    const available = new Set(values.filter((year) => year && year !== MISSING));
+    return YEAR_ORDER.filter((year) => available.has(year))
+        .concat(Array.from(available).filter((year) => !YEAR_ORDER.includes(year)));
+}
+
+function updateYearChipState(element) {
+    if (!isMultiSelect(element)) return;
+    element.querySelectorAll(".year-chip").forEach((chip) => {
+        const input = chip.querySelector("input[type='checkbox']");
+        chip.classList.toggle("is-selected", Boolean(input && input.checked));
+    });
+}
+
+function fillMultiSelect(element, values, labels = {}) {
+    if (!isMultiSelect(element)) return;
+
+    const selected = new Set(selectedFilterValues(element));
+    element.innerHTML = "";
+
+    values.forEach((value) => {
+        const option = document.createElement("label");
+        option.className = "year-chip";
+
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.value = value;
+        input.checked = selected.has(value);
+
+        const text = document.createElement("span");
+        text.textContent = labels[value] || value;
+
+        option.appendChild(input);
+        option.appendChild(text);
+        element.appendChild(option);
+    });
+
+    updateYearChipState(element);
+}
+
+function clearFilterControl(element) {
+    if (!element) return;
+    if (isMultiSelect(element)) {
+        element.querySelectorAll("input[type='checkbox']").forEach((input) => {
+            input.checked = false;
+        });
+        updateYearChipState(element);
+        return;
+    }
+    element.value = "";
+}
+
+function bindMultiSelect(element) {
+    if (!isMultiSelect(element) || element.dataset.bound === "true") return;
+
+    element.addEventListener("change", () => {
+        updateYearChipState(element);
+        resetToFirstPage();
+    });
+
+    element.dataset.bound = "true";
+}
+
 function getFilteredRows() {
     const hierarchy = filterValue(filters.hierarchy);
     const status = filterValue(filters.status);
-    const year = filterValue(filters.year);
+    const years = selectedYearSet();
     const group = filterValue(filters.group);
     const query = (filters.search && filters.search.value.trim().toLowerCase()) || "";
 
     return rows.filter((row) => {
         if (hierarchy && row.hier !== hierarchy) return false;
         if (status && row.respstatus !== status) return false;
-        if (year && row.reportYear !== year) return false;
+        if (years && !years.has(row.reportYear)) return false;
         if (group && displayValue(row.CompanyOPEN) !== group) return false;
         if (PAGE === "company" && COMPANY_NAME && displayValue(row.CompanyOPEN) !== COMPANY_NAME) return false;
 
@@ -367,7 +469,7 @@ function getFilteredRows() {
 
 function getFilteredSurveyRows() {
     const hierarchy = filterValue(filters.hierarchy);
-    const year = filterValue(filters.year);
+    const years = selectedYearSet();
     const company = PAGE === "company" ? COMPANY_NAME : filterValue(filters.company);
     const csi = filterValue(filters.csi);
     const device = filterValue(filters.device);
@@ -379,7 +481,7 @@ function getFilteredSurveyRows() {
 
     return surveyRows.filter((row) => {
         if (hierarchy && displayValue(row.hier) !== hierarchy) return false;
-        if (year && displayValue(row.Reportyear) !== year) return false;
+        if (years && !years.has(displayValue(row.Reportyear))) return false;
         if (company && displayValue(row.CompanyOPEN) !== company) return false;
         if (csi && displayValue(row.CSIcat3levelsG) !== csi) return false;
         if (device && deviceLabel(row) !== device) return false;
@@ -1642,16 +1744,23 @@ function createGroupedBarChart(containerId, data, options = {}) {
     });
 
     const containerWidth = container.clientWidth || 720;
-    const margin = { top: 40, right: 16, bottom: 36, left: 44 };
-    const width = Math.max(containerWidth - margin.left - margin.right, 280);
+    const rotateLabels = options.rotateLabels || groups.length > 10;
+    const margin = {
+        top: 40,
+        right: 16,
+        bottom: rotateLabels ? 58 : 36,
+        left: 44
+    };
+    const minGroupWidth = options.minGroupWidth || (groups.length > 12 ? 52 : 0);
+    const width = Math.max(containerWidth - margin.left - margin.right, groups.length * minGroupWidth, 280);
     const height = scaleChartHeight(options.height || 280);
     const color = d3.scaleOrdinal().domain(keys).range(colorRange);
 
     const x0 = d3.scaleBand()
         .domain(groups)
         .range([0, width])
-        .paddingInner(0.28)
-        .paddingOuter(0.08);
+        .paddingInner(groups.length > 12 ? 0.18 : 0.28)
+        .paddingOuter(0.06);
 
     const x1 = d3.scaleBand()
         .domain(keys)
@@ -1722,9 +1831,18 @@ function createGroupedBarChart(containerId, data, options = {}) {
             hideTooltip();
         });
 
-    chart.append("g")
+    const xAxis = chart.append("g")
         .attr("transform", `translate(0,${height})`)
         .call(d3.axisBottom(x0).tickSizeOuter(0));
+
+    if (rotateLabels) {
+        xAxis.selectAll("text")
+            .attr("transform", "rotate(-40)")
+            .style("text-anchor", "end")
+            .attr("dx", "-0.35em")
+            .attr("dy", "0.25em")
+            .style("font-size", "11px");
+    }
 
     chart.append("g")
         .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format("d")).tickSizeOuter(0));
@@ -2963,7 +3081,9 @@ function renderDashboard() {
         return;
     }
     if (PAGE === "survey") {
-        renderSurveyCharts(getFilteredSurveyRows());
+        const data = getFilteredSurveyRows();
+        renderSurveyCharts(data);
+        renderSurveyAnswersTable(data);
         return;
     }
 
@@ -2975,10 +3095,10 @@ function renderDashboard() {
     updateKpis(data);
     createDonutChart("status-chart", labeledRollup(data, "CSIcat3levelsG", CSI_LABELS), "answers", CSI_COLORS);
     createGroupedBarChart("csi-year-grouped", data, {
-        groupFn: (row) => row.reportYear,
+        groupFn: (row) => row.period,
         keyFn: csiCategory,
         keyOrder: ["Good", "Average", "Bad"],
-        groupOrder: YEAR_ORDER.filter((year) => year !== MISSING),
+        groupOrder: QUARTER_ORDER,
         colorRange: ["#00dc00", "#ff8700", "#e6284b"],
         height: 280
     });
@@ -3054,7 +3174,10 @@ function initFilters() {
         fillSelect(filters.hierarchy, hierarchyValues);
     }
     if (filters.status) fillSelect(filters.status, uniqueSorted(companyRespondents.map((row) => row.respstatus)));
-    if (filters.year) fillSelect(filters.year, yearValues);
+    if (filters.year) {
+        fillMultiSelect(filters.year, orderedYearValues(yearValues));
+        bindMultiSelect(filters.year);
+    }
     if (filters.group) {
         fillSelect(filters.group, uniqueSorted(companySurvey.map((row) => displayValue(row.CompanyOPEN))));
     }
@@ -3113,9 +3236,7 @@ function initFilters() {
     const resetButton = document.getElementById("reset-filters");
     if (resetButton) {
         resetButton.addEventListener("click", () => {
-            Object.values(filters).forEach((element) => {
-                if (element) element.value = "";
-            });
+            Object.values(filters).forEach((element) => clearFilterControl(element));
             resetToFirstPage();
         });
     }
