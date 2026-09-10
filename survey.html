@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=heatmap">
 
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
@@ -187,12 +187,12 @@
                 </div>
                 <div class="chart-card full-width">
                     <h2>Total effect on CSI</h2>
-                    <p class="chart-hint">Higher values sit further right in a priority map. Source: TotalEffect_Factors.</p>
+                    <p class="chart-hint">How strongly each factor affects overall CSI. Darker cells are stronger. 2026 is not yet available.</p>
                     <div id="survey-effect-heatmap"></div>
                 </div>
                 <div class="chart-card full-width">
                     <h2>Question weights by year</h2>
-                    <p class="chart-hint">How strongly each question reflects its underlying factor.</p>
+                    <p class="chart-hint">How strongly each question reflects its factor. Darker cells are stronger.</p>
                     <div id="survey-weight-heatmap"></div>
                 </div>
             </section>
@@ -223,6 +223,6 @@
     </div>
 
     <script src="nkidata.js"></script>
-    <script src="app.js"></script>
+    <script src="app.js?v=heatmap"></script>
 </body>
 </html>

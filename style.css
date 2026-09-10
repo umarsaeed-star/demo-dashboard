@@ -656,7 +656,8 @@ svg {
 
 .heatmap-label {
     font-size: 12px;
-    fill: var(--muted);
+    font-weight: 600;
+    pointer-events: none;
 }
 
 .treemap-leaf-label,

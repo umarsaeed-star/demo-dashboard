@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""Pack variablesweights.json into a browser-ready nkidata.js file."""
+"""Pack json/ sheet files into a browser-ready nkidata.js file."""
 
 import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "variablesweights.json"
+JSON_DIR = ROOT / "json"
+SURVEY = JSON_DIR / "SurveyData_2018-2026.json"
+FACTORS = JSON_DIR / "TotalEffect_Factors.json"
+WEIGHTS = JSON_DIR / "Weights_questions.json"
 OUT = ROOT / "nkidata.js"
 
 FACTOR_KEYS = [
@@ -135,11 +138,17 @@ def question_label(question):
     return mapping.get(key, question.replace("_", " "))
 
 
+def labeled_weight_rows(items):
+    return [{**item, "label": question_label(item["question"])} for item in items]
+
+
 def main():
-    text = SRC.read_text(encoding="utf-8")
-    marker = '\n"survey": ['
-    idx = text.find(marker)
-    meta = json.loads(text[:idx] + '\n"survey": []}')
+    for path in (SURVEY, FACTORS, WEIGHTS):
+        if not path.exists():
+            raise SystemExit(f"missing {path}. Run scripts/excel-to-json.py first.")
+
+    factors = json.loads(FACTORS.read_text(encoding="utf-8"))
+    weights = json.loads(WEIGHTS.read_text(encoding="utf-8"))
 
     companies, company_i = [], {}
     regions, region_i = [], {}
@@ -155,9 +164,9 @@ def main():
     sizes, size_i = [], {}
 
     packed = []
-    with SRC.open(encoding="utf-8") as handle:
+    with SURVEY.open(encoding="utf-8") as handle:
         for line in handle:
-            if line.startswith('"survey":'):
+            if line.startswith('"rows":'):
                 break
         for line in handle:
             raw = line.strip()
@@ -189,7 +198,7 @@ def main():
             ])
 
     payload = {
-        "sourceFile": "variablesweights.json",
+        "sourceFile": "json/SurveyData_2018-2026.json",
         "years": [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
         "companies": companies,
         "regions": regions,
@@ -214,15 +223,12 @@ def main():
             ["IfactorOPEN_csi", "CSI"],
             ["IfactorOPEN_loyalty", "Loyalty"],
         ],
-        "totalEffectFactors": meta["totalEffectFactors"],
-        "questionWeights": [
-            {**item, "label": question_label(item["question"])}
-            for item in meta["questionWeights"]
+        "totalEffectFactors": [
+            {"factorId": item["factor"], **{key: item.get(key) for key in ("2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026")}}
+            for item in factors["factors"]
         ],
-        "questionImpactWeights": [
-            {**item, "label": question_label(item["question"])}
-            for item in meta["questionImpactWeights"]
-        ],
+        "questionWeights": labeled_weight_rows(weights["weights"]),
+        "questionImpactWeights": labeled_weight_rows(weights["impactWeights"]),
         "rows": packed,
     }
 

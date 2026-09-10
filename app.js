@@ -262,6 +262,17 @@ function uniqueSorted(values) {
     });
 }
 
+function uniqueInOrder(values) {
+    const seen = new Set();
+    const ordered = [];
+    values.forEach((value) => {
+        if (seen.has(value)) return;
+        seen.add(value);
+        ordered.push(value);
+    });
+    return ordered;
+}
+
 function companySlug(name) {
     return String(name || "")
         .normalize("NFD")
@@ -2030,7 +2041,7 @@ function createHeatmapChart(containerId, data, rowFn, colFn, colOrder) {
         .attr("y", (d) => y(d.row) + y.bandwidth() / 2)
         .attr("text-anchor", "middle")
         .attr("dy", "0.35em")
-        .attr("fill", (d) => (d.count / maxCount > 0.55 ? "#fff" : "#321432"))
+        .style("fill", (d) => (d.count / maxCount > 0.55 ? "#fff" : "#321432"))
         .text((d) => d.count.toLocaleString());
 
     chart.append("g")
@@ -2177,6 +2188,14 @@ function createComboTrendChart(containerId, chartData) {
     legend.append("text").attr("x", 108).attr("y", 10).style("font-size", "12px").text("Avg CSI");
 }
 
+function formatHeatValue(value) {
+    if (value == null || value === "") return "";
+    const number = Number(value);
+    if (!Number.isFinite(number)) return "";
+    if (Math.abs(number) >= 10) return number.toFixed(1);
+    return number.toFixed(2);
+}
+
 function createValueHeatmap(containerId, cells, options = {}) {
     if (!clearChart(containerId)) return;
 
@@ -2186,8 +2205,11 @@ function createValueHeatmap(containerId, cells, options = {}) {
         return;
     }
 
-    const rows = uniqueSorted(cells.map((d) => d.row));
-    const cols = options.colOrder || uniqueSorted(cells.map((d) => d.col));
+    const rows = options.rowOrder
+        ? options.rowOrder.filter((row) => cells.some((cell) => cell.row === row))
+            .concat(uniqueInOrder(cells.map((d) => d.row)).filter((row) => !(options.rowOrder || []).includes(row)))
+        : uniqueInOrder(cells.map((d) => d.row));
+    const cols = options.colOrder || uniqueInOrder(cells.map((d) => d.col));
     const lookup = d3.rollup(cells, (values) => values[0].value, (d) => d.row, (d) => d.col);
     const grid = [];
     rows.forEach((row) => {
@@ -2198,14 +2220,17 @@ function createValueHeatmap(containerId, cells, options = {}) {
     });
 
     const containerWidth = container.clientWidth || 720;
-    const margin = { top: 36, right: 24, bottom: 16, left: options.left || 150 };
+    const margin = { top: 36, right: 16, bottom: 16, left: options.left || 150 };
     const width = Math.max(containerWidth - margin.left - margin.right, 240);
-    const height = Math.max(rows.length * 28, 120);
+    const rowHeight = options.rowHeight || 34;
+    const height = Math.max(rows.length * rowHeight, 120);
     const values = grid.map((d) => d.value).filter((value) => value != null);
-    const x = d3.scaleBand().domain(cols).range([0, width]).padding(0.08);
-    const y = d3.scaleBand().domain(rows).range([0, height]).padding(0.08);
-    const color = d3.scaleSequential(d3.interpolateRgb("#dcff3c", "#321432"))
-        .domain([d3.min(values) ?? 0, d3.max(values) ?? 1]);
+    const x = d3.scaleBand().domain(cols).range([0, width]).padding(0.1);
+    const y = d3.scaleBand().domain(rows).range([0, height]).padding(0.12);
+    const color = d3.scaleLinear()
+        .domain([d3.min(values) ?? 0, d3.quantile(values.slice().sort(d3.ascending), 0.55) ?? 0, d3.max(values) ?? 1])
+        .range(["#f4f0d8", "#dcff3c", "#321432"])
+        .clamp(true);
 
     const svg = d3.select(`#${containerId}`)
         .append("svg")
@@ -2224,10 +2249,10 @@ function createValueHeatmap(containerId, cells, options = {}) {
         .attr("y", (d) => y(d.row))
         .attr("width", x.bandwidth())
         .attr("height", y.bandwidth())
-        .attr("rx", 3)
-        .attr("fill", (d) => (d.value == null ? "#f7f7f2" : color(d.value)))
+        .attr("rx", 4)
+        .attr("fill", (d) => (d.value == null ? "#f4f4f0" : color(d.value)))
         .on("mouseover", (event, d) => {
-            const text = d.value == null ? "n/a" : Number(d.value).toFixed(3);
+            const text = d.value == null ? "n/a" : formatHeatValue(d.value);
             showTooltip(event, `<strong>${d.row}</strong><br>${d.col}: ${text}`);
         })
         .on("mousemove", (event) => {
@@ -2236,7 +2261,7 @@ function createValueHeatmap(containerId, cells, options = {}) {
         .on("mouseout", hideTooltip);
 
     chart.selectAll(".heatmap-count")
-        .data(grid.filter((d) => d.value != null && x.bandwidth() > 36))
+        .data(grid)
         .enter()
         .append("text")
         .attr("class", "heatmap-label")
@@ -2244,8 +2269,8 @@ function createValueHeatmap(containerId, cells, options = {}) {
         .attr("y", (d) => y(d.row) + y.bandwidth() / 2)
         .attr("text-anchor", "middle")
         .attr("dy", "0.35em")
-        .attr("fill", (d) => contrastFill(color(d.value)))
-        .text((d) => Number(d.value).toFixed(2));
+        .style("fill", (d) => (d.value == null ? "#b7a8b7" : contrastFill(color(d.value))))
+        .text((d) => (d.value == null ? "—" : formatHeatValue(d.value)));
 
     chart.append("g")
         .call(d3.axisLeft(y).tickSize(0).tickPadding(8))
@@ -2626,7 +2651,7 @@ function renderSurveyCharts(data) {
     createValueHeatmap(
         "survey-weight-heatmap",
         weightHeatmapCells(nkiMeta.questionWeights, YEAR_ORDER.filter((year) => year !== MISSING)),
-        { colOrder: YEAR_ORDER.filter((year) => year !== MISSING), left: 170 }
+        { colOrder: YEAR_ORDER.filter((year) => year !== MISSING), left: 170, rowHeight: 30 }
     );
     createValueHeatmap(
         "survey-effect-heatmap",
@@ -2634,8 +2659,13 @@ function renderSurveyCharts(data) {
             row: FACTOR_EFFECT_LABELS[item.factorId] || item.factorId,
             col: year,
             value: item[year]
-        })).filter((cell) => cell.value != null)),
-        { colOrder: YEAR_ORDER.filter((year) => year !== MISSING), left: 140 }
+        }))),
+        {
+            colOrder: YEAR_ORDER.filter((year) => year !== MISSING),
+            rowOrder: Object.values(FACTOR_EFFECT_LABELS),
+            left: 140,
+            rowHeight: 38
+        }
     );
     createStackedBarChart("survey-age-csi", data, {
         ...csiStack,

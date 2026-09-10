@@ -1,4 +1,5 @@
-variablesweights.json
+*.json
 respondentdata.js
 surveydata.js
 nkidata.js
+__pycache__/
