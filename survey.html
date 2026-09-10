@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Survey answers · Hubexo NKI</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+</head>
+
+<body data-page="survey">
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-mark">hubexo</span>
+            <span class="brand-sub">NKI Dashboard</span>
+        </div>
+        <nav class="sidebar-nav" aria-label="Main">
+            <a href="index.html">Sample</a>
+            <a href="survey.html" class="is-active">Survey answers</a>
+            <a href="company.html">Company</a>
+        </nav>
+        <div class="sidebar-label">Companies</div>
+        <nav id="company-nav" class="sidebar-companies" aria-label="Companies"></nav>
+    </aside>
+
+    <div class="app-shell">
+
+        <header class="dashboard-header">
+            <div>
+                <p class="page-eyebrow">NKI survey</p>
+                <h1>Survey answers</h1>
+                <p>CSI, recommend, factor scores, and question weights across builders.</p>
+            </div>
+            <div class="header-meta" id="record-count-label"></div>
+        </header>
+
+        <main class="dashboard">
+
+            <section class="filters" aria-label="Dashboard filters">
+                <label>
+                    Company
+                    <select id="filter-company">
+                        <option value="">All</option>
+                    </select>
+                </label>
+                <label>
+                    Report year
+                    <select id="filter-year">
+                        <option value="">All</option>
+                    </select>
+                </label>
+                <label>
+                    CSI rating
+                    <select id="filter-csi">
+                        <option value="">All</option>
+                    </select>
+                </label>
+                <label>
+                    Region
+                    <select id="filter-region">
+                        <option value="">All</option>
+                    </select>
+                </label>
+                <label>
+                    Device
+                    <select id="filter-device">
+                        <option value="">All</option>
+                    </select>
+                </label>
+                <label>
+                    Age group
+                    <select id="filter-age">
+                        <option value="">All</option>
+                    </select>
+                </label>
+                <label>
+                    Gender
+                    <select id="filter-gender">
+                        <option value="">All</option>
+                    </select>
+                </label>
+                <label>
+                    Family
+                    <select id="filter-family">
+                        <option value="">All</option>
+                    </select>
+                </label>
+                <label class="search-label">
+                    Search
+                    <input id="filter-search" type="search" placeholder="Company, project…">
+                </label>
+                <button type="button" id="reset-filters">Reset</button>
+            </section>
+
+            <section class="kpi-board">
+                <div class="kpi-group">
+                    <p class="kpi-group-label">Headline numbers</p>
+                    <div class="kpi-container">
+                        <div class="kpi-card">
+                            <div class="kpi-title">Answers</div>
+                            <div id="kpi-survey-total" class="kpi-value">0</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">Good CSI</div>
+                            <div id="kpi-survey-complete" class="kpi-value">0</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">Average CSI (1–10)</div>
+                            <div id="kpi-survey-csi" class="kpi-value">0</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">Recommend</div>
+                            <div id="kpi-survey-loyalty" class="kpi-value">0</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page-section">
+                <div class="section-head">
+                    <h2>Overview</h2>
+                    <p>CSI mix and device.</p>
+                </div>
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h2>CSI rating</h2>
+                        <div id="survey-csi-cat-chart" class="donut-wrap"></div>
+                    </div>
+                    <div class="chart-card">
+                        <h2>Device</h2>
+                        <div id="survey-device-chart" class="donut-wrap"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page-section">
+                <div class="section-head">
+                    <h2>Companies</h2>
+                    <p>CSI mix for the largest builders.</p>
+                </div>
+                <div class="chart-card full-width">
+                    <h2>Company by CSI rating</h2>
+                    <p class="chart-hint">Stacked Good / Average / Bad mix for the largest builders.</p>
+                    <div id="survey-company-csi"></div>
+                </div>
+            </section>
+
+            <section class="page-section">
+                <div class="section-head">
+                    <h2>NKI scores</h2>
+                    <p>Overall CSI, recommend, and the 0–100 factor profile.</p>
+                </div>
+                <div class="chart-card full-width">
+                    <h2>Overall CSI (1–10)</h2>
+                    <p class="chart-hint">Green is 8–10, orange 6–7, red 1–5. Don’t know (98) is excluded.</p>
+                    <div id="survey-csi-score-chart"></div>
+                </div>
+                <div class="chart-card full-width">
+                    <h2>Would recommend (1–10)</h2>
+                    <p class="chart-hint">Loyalty / recommend score. Don’t know (98) is excluded.</p>
+                    <div id="survey-loyalty-chart"></div>
+                </div>
+                <div class="chart-card full-width">
+                    <h2>NKI factor averages</h2>
+                    <p class="chart-hint">Average 0–100 scores across the NKI factors.</p>
+                    <div id="survey-factor-chart"></div>
+                </div>
+                <div class="chart-card full-width">
+                    <h2>Factor scores by year</h2>
+                    <p class="chart-hint">Average 0–100 factor scores for the current filter.</p>
+                    <div id="survey-factor-trend"></div>
+                </div>
+            </section>
+
+            <section class="page-section">
+                <div class="section-head">
+                    <h2>Drivers and weights</h2>
+                    <p>How strongly each factor and question contributes to CSI. 2026 total-effect values are not yet available.</p>
+                </div>
+                <div class="chart-card full-width">
+                    <h2>Total effect on CSI</h2>
+                    <p class="chart-hint">Higher values sit further right in a priority map. Source: TotalEffect_Factors.</p>
+                    <div id="survey-effect-heatmap"></div>
+                </div>
+                <div class="chart-card full-width">
+                    <h2>Question weights by year</h2>
+                    <p class="chart-hint">How strongly each question reflects its underlying factor.</p>
+                    <div id="survey-weight-heatmap"></div>
+                </div>
+            </section>
+
+            <section class="page-section">
+                <div class="section-head">
+                    <h2>Sample mix</h2>
+                    <p>Age and gender against CSI.</p>
+                </div>
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h2>Age group by CSI</h2>
+                        <div id="survey-age-csi"></div>
+                    </div>
+                    <div class="chart-card">
+                        <h2>Gender</h2>
+                        <div id="survey-gender-chart" class="donut-wrap"></div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <footer>
+            <p>Hubexo · NKI Dashboard · 2018–2026</p>
+        </footer>
+
+    </div>
+
+    <script src="nkidata.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Company · Hubexo NKI</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+</head>
+
+<body data-page="company">
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-mark">hubexo</span>
+            <span class="brand-sub">NKI Dashboard</span>
+        </div>
+        <nav class="sidebar-nav" aria-label="Main">
+            <a href="index.html">Sample</a>
+            <a href="survey.html">Survey answers</a>
+            <a href="company.html" class="is-active">Company</a>
+        </nav>
+        <div class="sidebar-label">Companies</div>
+        <nav id="company-nav" class="sidebar-companies" aria-label="Companies"></nav>
+    </aside>
+
+    <div class="app-shell">
+
+        <header class="dashboard-header">
+            <div>
+                <p class="page-eyebrow">Company profile</p>
+                <h1 id="company-title">Company</h1>
+                <p id="company-lead">Select a company from the list, or open <code>company.html?company=jm</code></p>
+            </div>
+            <div class="header-meta" id="record-count-label"></div>
+        </header>
+
+        <main class="dashboard">
+
+            <section id="company-index">
+                <div class="section-head">
+                    <h2>Choose a company</h2>
+                    <p>Open a builder profile to see CSI, factor scores, and project mix.</p>
+                </div>
+                <div id="company-index-grid" class="company-card-grid"></div>
+            </section>
+
+            <div id="company-detail" hidden>
+
+                <section class="filters" aria-label="Dashboard filters">
+                    <label>
+                        Project
+                        <select id="filter-hierarchy">
+                            <option value="">All</option>
+                        </select>
+                    </label>
+                    <label>
+                        Report year
+                        <select id="filter-year">
+                            <option value="">All</option>
+                        </select>
+                    </label>
+                    <label>
+                        CSI rating
+                        <select id="filter-csi">
+                            <option value="">All</option>
+                        </select>
+                    </label>
+                    <label>
+                        Region
+                        <select id="filter-region">
+                            <option value="">All</option>
+                        </select>
+                    </label>
+                    <label>
+                        Device
+                        <select id="filter-device">
+                            <option value="">All</option>
+                        </select>
+                    </label>
+                    <label>
+                        Age group
+                        <select id="filter-age">
+                            <option value="">All</option>
+                        </select>
+                    </label>
+                    <label>
+                        Gender
+                        <select id="filter-gender">
+                            <option value="">All</option>
+                        </select>
+                    </label>
+                    <label class="search-label">
+                        Search
+                        <input id="filter-search" type="search" placeholder="Project, region…">
+                    </label>
+                    <button type="button" id="reset-filters">Reset</button>
+                </section>
+
+                <section class="kpi-board">
+                    <div class="kpi-group">
+                        <p class="kpi-group-label">Headline numbers</p>
+                        <div class="kpi-container">
+                            <div class="kpi-card">
+                                <div class="kpi-title">Answers</div>
+                                <div id="kpi-survey-total" class="kpi-value">0</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-title">Average CSI</div>
+                                <div id="kpi-survey-csi" class="kpi-value">0</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-title">Recommend</div>
+                                <div id="kpi-survey-loyalty" class="kpi-value">0</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-title">Avg CSI (0–100)</div>
+                                <div id="kpi-coverage" class="kpi-value">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="page-section">
+                    <div class="section-head">
+                        <h2>Overview</h2>
+                        <p>CSI mix and device for this builder.</p>
+                    </div>
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h2>CSI rating</h2>
+                            <div id="survey-csi-cat-chart" class="donut-wrap"></div>
+                        </div>
+                        <div class="chart-card">
+                            <h2>Device</h2>
+                            <div id="survey-device-chart" class="donut-wrap"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="page-section">
+                    <div class="section-head">
+                        <h2>NKI scores</h2>
+                        <p>Average 0–100 factor scores and the 1–10 CSI scale.</p>
+                    </div>
+                    <div class="chart-card full-width">
+                        <h2>NKI factor averages</h2>
+                        <div id="survey-factor-chart"></div>
+                    </div>
+                    <div class="chart-card full-width">
+                        <h2>Factor scores by year</h2>
+                        <div id="survey-factor-trend"></div>
+                    </div>
+                    <div class="chart-card full-width">
+                        <h2>Overall CSI (1–10)</h2>
+                        <p class="chart-hint">Green is 8–10, orange 6–7, red 1–5. Don’t know (98) is excluded.</p>
+                        <div id="survey-csi-score-chart"></div>
+                    </div>
+                    <div class="chart-card full-width">
+                        <h2>Would recommend (1–10)</h2>
+                        <p class="chart-hint">Loyalty / recommend score. Don’t know (98) is excluded.</p>
+                        <div id="survey-loyalty-chart"></div>
+                    </div>
+                </section>
+
+                <section class="page-section">
+                    <div class="section-head">
+                        <h2>Projects</h2>
+                        <p>Where answer volume sits across this builder’s projects.</p>
+                    </div>
+                    <div class="chart-card full-width treemap-wide">
+                        <h2>Answers by project</h2>
+                        <p class="chart-hint">Click a tile to filter that project.</p>
+                        <div id="survey-hierarchy-chart"></div>
+                    </div>
+                </section>
+
+                <section class="page-section">
+                    <div class="section-head">
+                        <h2>Sample mix</h2>
+                        <p>Year, gender, and age.</p>
+                    </div>
+                    <div class="chart-card full-width">
+                        <h2>Answers and CSI by year</h2>
+                        <p class="chart-hint">Volume by year, with average CSI (0–100) on the right axis.</p>
+                        <div id="survey-sendout-chart"></div>
+                    </div>
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h2>Gender</h2>
+                            <div id="survey-gender-chart" class="donut-wrap"></div>
+                        </div>
+                        <div class="chart-card">
+                            <h2>Age group by CSI</h2>
+                            <div id="survey-age-csi"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="page-section">
+                    <div class="section-head">
+                        <h2>Records</h2>
+                        <p>Filtered survey answers for this company.</p>
+                    </div>
+                    <div class="chart-card full-width table-card">
+                        <div class="table-header">
+                            <h2>Survey answers</h2>
+                            <p id="survey-table-count"></p>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Company</th>
+                                        <th>Project</th>
+                                        <th>CSI</th>
+                                        <th>CSI score</th>
+                                        <th>Recommend</th>
+                                        <th>Year</th>
+                                        <th>Device</th>
+                                        <th>Age</th>
+                                        <th>Gender</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="survey-answers-table"></tbody>
+                            </table>
+                        </div>
+                        <div class="pagination" id="survey-pagination">
+                            <label class="page-size">
+                                Rows
+                                <select id="survey-page-size">
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </label>
+                            <p id="survey-page-info"></p>
+                            <div class="page-buttons" id="survey-page-buttons"></div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+        </main>
+
+        <footer>
+            <p>Hubexo · NKI Dashboard · 2018–2026</p>
+        </footer>
+
+    </div>
+
+    <script src="nkidata.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Sample · Hubexo NKI</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+</head>
+
+<body data-page="respondents">
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-mark">hubexo</span>
+            <span class="brand-sub">NKI Dashboard</span>
+        </div>
+        <nav class="sidebar-nav" aria-label="Main">
+            <a href="index.html" class="is-active">Sample</a>
+            <a href="survey.html">Survey answers</a>
+            <a href="company.html">Company</a>
+        </nav>
+        <div class="sidebar-label">Companies</div>
+        <nav id="company-nav" class="sidebar-companies" aria-label="Companies"></nav>
+    </aside>
+
+    <div class="app-shell">
+
+        <header class="dashboard-header">
+            <div>
+                <p class="page-eyebrow">NKI 2018–2026</p>
+                <h1>Sample</h1>
+                <p>Who answered: volume by year, builder, region, and dwelling.</p>
+            </div>
+            <div class="header-meta" id="record-count-label"></div>
+        </header>
+
+        <main class="dashboard">
+
+            <section class="filters" aria-label="Dashboard filters">
+                <label>
+                    Company
+                    <select id="filter-group">
+                        <option value="">All</option>
+                    </select>
+                </label>
+                <label>
+                    Region
+                    <select id="filter-region">
+                        <option value="">All</option>
+                    </select>
+                </label>
+                <label>
+                    Size
+                    <select id="filter-size">
+                        <option value="">All</option>
+                    </select>
+                </label>
+                <label>
+                    Price band
+                    <select id="filter-price">
+                        <option value="">All</option>
+                    </select>
+                </label>
+                <label>
+                    Report year
+                    <select id="filter-year">
+                        <option value="">All</option>
+                    </select>
+                </label>
+                <label class="search-label">
+                    Search
+                    <input id="filter-search" type="search" placeholder="Company, project, region…">
+                </label>
+                <button type="button" id="reset-filters">Reset</button>
+            </section>
+
+            <section class="kpi-board">
+                <div class="kpi-group">
+                    <p class="kpi-group-label">Headline numbers</p>
+                    <div class="kpi-container">
+                        <div class="kpi-card">
+                            <div class="kpi-title">Answers</div>
+                            <div id="kpi-total" class="kpi-value">0</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">Companies</div>
+                            <div id="kpi-active" class="kpi-value">0</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">Years</div>
+                            <div id="kpi-hierarchies" class="kpi-value">0</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">Avg CSI (0–100)</div>
+                            <div id="kpi-coverage" class="kpi-value">0</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page-section">
+                <div class="section-head">
+                    <h2>Overview</h2>
+                    <p>CSI mix and how volume and scores move over time.</p>
+                </div>
+                <div class="chart-card full-width">
+                    <h2>CSI rating by year</h2>
+                    <p class="chart-hint">Answer count per year, split by CSI band.</p>
+                    <div id="csi-year-grouped"></div>
+                </div>
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h2>CSI rating</h2>
+                        <div id="status-chart" class="donut-wrap"></div>
+                    </div>
+                    <div class="chart-card">
+                        <h2>Answers and CSI by year</h2>
+                        <p class="chart-hint">Bars are volume. The line is average CSI (0–100).</p>
+                        <div id="sample-csi-trend"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page-section">
+                <div class="section-head">
+                    <h2>Companies</h2>
+                    <p>Volume by builder. Click a bar to open that company.</p>
+                </div>
+                <div class="chart-card full-width">
+                    <h2>Largest companies</h2>
+                    <p class="chart-hint">Click a bar to open that company.</p>
+                    <div id="group-chart"></div>
+                </div>
+                <div class="chart-card full-width">
+                    <h2>Top companies by year</h2>
+                    <p class="chart-hint">Stacked counts for the 12 largest builders in the current filter.</p>
+                    <div id="group-year-chart"></div>
+                </div>
+            </section>
+
+            <section class="page-section">
+                <div class="section-head">
+                    <h2>Projects</h2>
+                    <p>Where answers sit across housing projects.</p>
+                </div>
+                <div class="chart-card full-width treemap-wide">
+                    <h2>Answers by project</h2>
+                    <p class="chart-hint">Grouped by company. Largest 80 projects in the current filter.</p>
+                    <div id="hierarchy-chart"></div>
+                </div>
+            </section>
+
+            <section class="page-section">
+                <div class="section-head">
+                    <h2>Dwelling mix</h2>
+                    <p>Region, rooms, price band, family, and income.</p>
+                </div>
+                <div class="chart-card full-width">
+                    <h2>CSI rating by region</h2>
+                    <p class="chart-hint">Answer count by region, stacked Good → Bad. Hover a band for the detail.</p>
+                    <div id="region-csi-stacked"></div>
+                </div>
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h2>Region group</h2>
+                        <div id="created-chart" class="donut-wrap"></div>
+                    </div>
+                    <div class="chart-card">
+                        <h2>Rooms</h2>
+                        <div id="sample-size-chart"></div>
+                    </div>
+                </div>
+                <div class="chart-card full-width">
+                    <h2>Price band</h2>
+                    <p class="chart-hint">Purchase price grouped into million-SEK bands.</p>
+                    <div id="sample-price-chart"></div>
+                </div>
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h2>Family</h2>
+                        <div id="sample-family-chart" class="donut-wrap"></div>
+                    </div>
+                    <div class="chart-card">
+                        <h2>Income</h2>
+                        <div id="sample-income-chart" class="donut-wrap"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page-section">
+                <div class="section-head">
+                    <h2>Records</h2>
+                    <p>Filtered answer list for this view.</p>
+                </div>
+                <div class="chart-card full-width table-card">
+                    <div class="table-header">
+                        <h2>Answers</h2>
+                        <p id="table-count"></p>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Company</th>
+                                    <th>Project</th>
+                                    <th>CSI</th>
+                                    <th>Year</th>
+                                    <th>Region</th>
+                                    <th>Rooms</th>
+                                </tr>
+                            </thead>
+                            <tbody id="respondents-table"></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="pagination">
+                        <label class="page-size">
+                            Rows
+                            <select id="page-size">
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </label>
+                        <p id="page-info"></p>
+                        <div class="page-buttons" id="page-buttons"></div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <footer>
+            <p>Hubexo · NKI Dashboard · 2018–2026</p>
+        </footer>
+
+    </div>
+
+    <script src="nkidata.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
